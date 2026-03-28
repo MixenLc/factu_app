@@ -1,6 +1,6 @@
 {
   "name": "factu-app",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Aplicación para gestión de presupuestos y facturas",
   "main": "main.js",
   "author": "Mikel Leal Cainzos",
@@ -12,12 +12,22 @@
   },
   "config": {
     "forge": {
-      "packagerConfig": {},
+      "packagerConfig": {
+        "name": "FactuApp",
+        "executableName": "factu-app"
+      },
       "makers": [
         {
           "name": "@electron-forge/maker-squirrel",
           "config": {
             "name": "factu_app"
+          }
+        },
+        {
+          "name": "@electron-forge/maker-dmg",
+          "config": {
+            "name": "Instalador-FactuApp",
+            "format": "ULFO"
           }
         },
         {
@@ -43,6 +53,7 @@
   "devDependencies": {
     "@electron-forge/cli": "^6.0.0",
     "@electron-forge/maker-deb": "^6.0.0",
+    "@electron-forge/maker-dmg": "^7.11.1",
     "@electron-forge/maker-rpm": "^6.0.0",
     "@electron-forge/maker-squirrel": "^6.0.0",
     "@electron-forge/maker-zip": "^6.0.0",
