@@ -1,0 +1,24 @@
+name: Build/Release
+on: push
+jobs:
+  release:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest] # Aquí GitHub arranca un Mac y un Windows
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Install Dependencies
+        run: npm install
+      - name: Build App
+        run: npm run make
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: Out-${{ matrix.os }}
+          path: out/make/
