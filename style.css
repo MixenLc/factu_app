@@ -1,0 +1,122 @@
+:root { --primary: #007AFF; --bg: #F5F5F7; --text: #1d1d1f; }
+body { font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: var(--text); }
+
+#toolbar { background: white; padding: 15px; border-radius: 12px; display: flex; justify-content: space-between; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); flex-wrap: wrap; gap: 10px; }
+.perfil-section, .main-buttons { display: flex; gap: 10px; align-items: center; }
+
+.hoja-a4 { background: white; width: 210mm; min-height: 297mm; padding: 15mm; margin: 0 auto; box-shadow: 0 0 20px rgba(0,0,0,0.1); position: relative; }
+
+.header-doc { display: flex; justify-content: space-between; border-bottom: 2px solid var(--primary); padding-bottom: 15px; margin-bottom: 20px; flex-wrap: wrap; gap: 20px; }
+
+/* Estilo para los campos de número y fecha */
+.campo-linea {
+    margin: 5px 0;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+.campo-linea strong {
+    min-width: 50px;
+}
+.campo-linea input {
+    border: none;
+    border-bottom: 1px solid #ccc;
+    background: transparent;
+    font-family: inherit;
+    font-size: inherit;
+    padding: 4px 0;
+    width: 150px;
+}
+.campo-linea input:focus {
+    outline: none;
+    border-bottom-color: var(--primary);
+}
+
+.datos-linea span[contenteditable] {
+    border-bottom: 1px dotted #ccc;
+    padding: 2px 0;
+    min-width: 150px;
+    display: inline-block;
+}
+
+table { width: 100%; border-collapse: collapse; margin: 20px 0; table-layout: fixed; }
+th, td { border: 1px solid #d1d1d6; padding: 10px; vertical-align: top; text-align: left; }
+th { background: #f2f2f7; }
+td textarea { width: 100%; border: none; font-size: 14px; resize: none; overflow: hidden; background: transparent; font-family: inherit; margin: 0; }
+td input { width: 100%; border: none; font-size: 14px; background: transparent; text-align: right; }
+
+.contenedor-final { display: flex; justify-content: space-between; margin-top: 30px; gap: 40px; flex-wrap: wrap; }
+.bloque-izq { flex-grow: 1; min-width: 200px; }
+.observaciones { display: flex; flex-direction: column; }
+.observaciones textarea { margin-top: 5px; align-self: flex-start; width: 100%; }
+.totales { min-width: 200px; text-align: right; }
+.total-row { padding: 5px 0; font-size: 1.1em; }
+.grand-total { font-size: 1.5em; font-weight: bold; color: var(--primary); border-top: 2px solid var(--primary); margin-top: 10px; }
+
+.espacio-firma { margin-top: 50px; text-align: center; width: 200px; }
+.linea-firma { border-top: 1px solid #000; width: 100%; margin-bottom: 5px; }
+
+.no-print { display: inline-block; }
+.btn-primary { background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; }
+.btn-add { background: #34C759; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; margin-bottom: 20px; }
+
+/* Modal personalizado */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+.modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    min-width: 300px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+.modal-content p { margin-bottom: 15px; }
+.modal-content input { width: 100%; padding: 8px; margin-bottom: 15px; }
+.modal-buttons { text-align: right; }
+.modal-buttons button { margin-left: 10px; padding: 6px 12px; }
+
+/* ESTILOS PARA IMPRESIÓN */
+@media print {
+    .no-print { display: none !important; }
+    body { background: white; padding: 0; margin: 0; }
+    .hoja-a4 { width: 100%; padding: 0; margin: 0; box-shadow: none; min-height: auto; }
+    @page { size: A4; margin: 1cm; }
+    table { page-break-inside: avoid; }
+    tr { page-break-inside: avoid; }
+    .contenedor-final { page-break-before: avoid; }
+    /* Ocultar el icono del calendario en la fecha */
+    input[type="date"]::-webkit-calendar-picker-indicator {
+        display: none;
+    }
+    input[type="date"] {
+        -webkit-appearance: none;
+        appearance: none;
+        border: none;
+        background: none;
+        font: inherit;
+        padding: 0;
+    }
+    .campo-linea input,
+    .datos-linea span[contenteditable] {
+        border: none;
+        background: none;
+        padding: 0;
+        font: inherit;
+        color: black;
+    }
+    textarea {
+        border: none;
+        background: none;
+        overflow: visible;
+    }
+}

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
+    <title>FactuApp Pro</title>
+</head>
+<body>
+    <div id="toolbar" class="no-print">
+        <div class="perfil-section">
+            <select id="selectPerfil"><option value="">Seleccionar Perfil...</option></select>
+            <button onclick="crearNuevoPerfil()">+ Crear Perfil</button>
+            <button onclick="borrarPerfil()">🗑️ Borrar Perfil</button>
+        </div>
+        <div class="main-buttons">
+            <button onclick="nuevoProyecto()">📄 Nuevo Proyecto</button>
+            <button onclick="guardarEditable()">💾 Guardar Editable</button>
+            <button onclick="dispararCarga()">📂 Cargar Proyecto</button>
+            <button class="btn-primary" onclick="exportarPDF()">📄 Exportar a PDF</button>
+        </div>
+        <input type="file" id="fileInput" style="display:none" accept=".json">
+    </div>
+
+    <div id="documento" class="hoja-a4">
+        <header class="header-doc">
+            <div id="datosEmisor">
+                <h1 contenteditable="true" id="emisorNombre">NOMBRE EMPRESA</h1>
+                <div class="datos-linea">
+                    <strong>DNI/CIF:</strong> <span contenteditable="true" id="emisorDNI">00000000X</span><br>
+                    <strong>Dirección:</strong> <span contenteditable="true" id="emisorDireccion">Calle Falsa 123, Ciudad</span><br>
+                    <strong>Teléfono:</strong> <span contenteditable="true" id="emisorTelefono">+34 600 000 000</span><br>
+                </div>
+            </div>
+            <div class="tipo-doc">
+                <h2 id="tituloDoc">PRESUPUESTO</h2>
+                <div class="info-meta">
+                    <div class="campo-linea">
+                        <strong>Nº:</strong>
+                        <input type="text" id="numDoc" value="2026-001">
+                    </div>
+                    <div class="campo-linea">
+                        <strong>Fecha:</strong>
+                        <input type="date" id="fechaDoc">
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <section class="cliente-section">
+            <strong>CLIENTE:</strong>
+            <div contenteditable="true" id="datosCliente" class="cuadro-texto">Nombre y datos del cliente...</div>
+        </section>
+
+        <table id="tablaConceptos">
+            <thead>
+                <tr><th>Descripción del Trabajo</th><th width="120">Precio (€)</th><th class="no-print" width="40"></th></tr>
+            </thead>
+            <tbody id="cuerpoTabla"></tbody>
+        </table>
+        <button class="no-print btn-add" onclick="añadirFila()">+ Añadir Concepto</button>
+
+        <section class="contenedor-final">
+            <div class="bloque-izq">
+                <div class="observaciones">
+                    <strong>Observaciones:</strong>
+                    <textarea id="obsText" rows="3" placeholder="Ej: Pago 50% al inicio..."></textarea>
+                </div>
+                <div class="espacio-firma">
+                    <div class="linea-firma"></div>
+                    <p>Firma y Sello</p>
+                </div>
+            </div>
+
+            <div class="totales">
+                <div class="total-row">Subtotal: <span id="subtotal">0.00</span>€</div>
+                <div class="total-row">
+                    IVA 
+                    <select id="ivaSelect" onchange="calcularTotales()" class="no-print">
+                        <option value="21">21%</option>
+                        <option value="10">10%</option>
+                        <option value="4">4%</option>
+                        <option value="0">0%</option>
+                    </select>: 
+                    <span id="ivaCuota">0.00</span>€
+                </div>
+                <div class="total-row grand-total">TOTAL: <span id="totalFinal">0.00</span>€</div>
+            </div>
+        </section>
+
+        <button id="btnConvertir" class="no-print" onclick="convertirAFactura()">Convertir en Factura</button>
+    </div>
+
+    <!-- Modal personalizado -->
+    <div id="modalOverlay" style="display: none;" class="modal-overlay">
+        <div class="modal-content">
+            <p id="modalMessage">Mensaje</p>
+            <input type="text" id="modalInput" value="">
+            <div class="modal-buttons">
+                <button id="modalOk">Aceptar</button>
+                <button id="modalCancel">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html>
