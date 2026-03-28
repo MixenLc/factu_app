@@ -38,7 +38,8 @@ ipcMain.on('exportar-pdf', async (event, suggestedName) => {
       marginsType: 0,
       pageSize: 'A4',
       printBackground: true,
-      landscape: false
+      landscape: false,
+      scale: 0.8
     };
     const data = await win.webContents.printToPDF(options);
     

@@ -1,6 +1,6 @@
 {
   "name": "factu-app",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "Aplicación para gestión de presupuestos y facturas",
   "main": "main.js",
   "author": "Mikel Leal Cainzos",
