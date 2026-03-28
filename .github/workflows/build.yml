@@ -2,7 +2,7 @@ name: Build/Release
 on:
   push:
     tags:
-      - 'v*' # Esto se activa solo cuando subes un tag como v1.0.1
+      - 'v*'
 
 jobs:
   release:
@@ -10,6 +10,10 @@ jobs:
       matrix:
         os: [macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
+    
+    # ESTO ARREGLA EL ERROR DE PERMISOS
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout Code
@@ -18,7 +22,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24 # Actualizado a la versión más moderna
 
       - name: Install Dependencies
         run: npm install
