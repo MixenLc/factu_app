@@ -14,13 +14,19 @@
     "forge": {
       "packagerConfig": {
         "name": "FactuApp",
-        "executableName": "factu-app"
+        "executableName": "factu-app",
+        "icon": "./assets/icono"
       },
       "makers": [
         {
           "name": "@electron-forge/maker-squirrel",
           "config": {
-            "name": "factu_app"
+            "name": "factu_app",
+            "setupExe": "Instalador-FactuApp.exe",
+            "setupIcon": "./assets/icono.ico",
+            "createDesktopShortcut": true,
+            "createStartMenuShortcut": true,
+            "noMsi": true
           }
         },
         {
