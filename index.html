@@ -26,9 +26,9 @@
             <div id="datosEmisor">
                 <h1 contenteditable="true" id="emisorNombre">NOMBRE EMPRESA</h1>
                 <div class="datos-linea">
-                    <strong>DNI/CIF:</strong> <span contenteditable="true" id="emisorDNI">00000000X</span><br>
-                    <strong>Dirección:</strong> <span contenteditable="true" id="emisorDireccion">Calle Falsa 123, Ciudad</span><br>
-                    <strong>Teléfono:</strong> <span contenteditable="true" id="emisorTelefono">+34 600 000 000</span><br>
+                    <strong>DNI/CIF:</strong> <span contenteditable="true" id="emisorDNI" data-placeholder="DNI / NIE / CIF"></span><br>
+                    <strong>Dirección:</strong> <span contenteditable="true" id="emisorDireccion" data-placeholder="Dirección completa"></span><br>
+                    <strong>Teléfono:</strong> <span contenteditable="true" id="emisorTelefono" data-placeholder="Teléfono (solo números, espacios y comas)"></span><br>
                 </div>
             </div>
             <div class="tipo-doc">
@@ -47,8 +47,13 @@
         </header>
 
         <section class="cliente-section">
-            <strong>CLIENTE:</strong>
-            <div contenteditable="true" id="datosCliente" class="cuadro-texto">Nombre y datos del cliente...</div>
+            <h3>Datos del Cliente</h3>
+               <div class="datos-linea">
+                    <strong>Nombre:</strong> <span contenteditable="true" id="clienteNombre" data-placeholder="Nombre y Apellidos"></span><br>
+                    <strong>DNI/CIF:</strong> <span contenteditable="true" id="clienteDNI" data-placeholder="DNI / NIE / CIF"></span><br>
+                    <strong>Dirección:</strong> <span contenteditable="true" id="clienteDireccion" data-placeholder="Dirección completa"></span><br>
+                    <strong>Teléfono:</strong> <span contenteditable="true" id="clienteTelefono" data-placeholder="Teléfono (solo números, espacios y comas)"></span><br>
+                </div>
         </section>
 
         <table id="tablaConceptos">
@@ -63,7 +68,7 @@
             <div class="bloque-izq">
                 <div class="observaciones">
                     <strong>Observaciones:</strong>
-                    <textarea id="obsText" rows="3" placeholder="Ej: Pago 50% al inicio..."></textarea>
+                    <textarea id="obsText" placeholder="Ej: Pago 50% al inicio..." style="resize: none; overflow: hidden;"></textarea>
                 </div>
                 <div class="espacio-firma">
                     <div class="linea-firma"></div>

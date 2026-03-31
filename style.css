@@ -85,6 +85,31 @@ td input { width: 100%; border: none; font-size: 14px; background: transparent; 
 .modal-buttons { text-align: right; }
 .modal-buttons button { margin-left: 10px; padding: 6px 12px; }
 
+[contenteditable="true"]:empty::before {
+    content: attr(data-placeholder);
+    color: #999;
+    font-style: italic;
+    cursor: text;
+}
+
+[contenteditable="true"] {
+    min-width: 50px;
+    border-bottom: 1px dotted #ccc;
+    padding: 2px 0;
+    display: inline-block;
+}
+
+/* Evitar que el cuadro de observaciones se pueda estirar manualmente */
+#obsText {
+    width: 100%;
+    min-height: 60px;
+    border: 1px solid #eee;
+    padding: 5px;
+    font-family: inherit;
+    font-size: 0.9em;
+    resize: none !important; /* Punto 4 */
+}
+
 /* ESTILOS PARA IMPRESIÓN */
 @media print {
     .no-print { display: none !important; }
@@ -118,5 +143,8 @@ td input { width: 100%; border: none; font-size: 14px; background: transparent; 
         border: none;
         background: none;
         overflow: visible;
+    }
+    [contenteditable="true"]:empty:before {
+        content: "";
     }
 }

@@ -4,48 +4,77 @@ const { ipcRenderer } = require('electron');
 let currentFilePath = null;
 let perfiles = JSON.parse(localStorage.getItem('factu_perfiles')) || [];
 
-// --- LÓGICA DE NUMERACIÓN AUTOMÁTICA ---
+// --- 1. LÓGICA DE NUMERACIÓN INTELIGENTE (Año + Correlativo) ---
 function obtenerSiguienteNumero(tipo) {
     const anioActual = new Date().getFullYear();
+    // Claves: last_num_PRESUPUESTO, last_num_FACTURA
     const ultimoNum = parseInt(localStorage.getItem(`last_num_${tipo}`)) || 0;
     const ultimoAnio = parseInt(localStorage.getItem(`last_anio_${tipo}`)) || anioActual;
 
     let siguienteCorrelativo;
     if (anioActual > ultimoAnio) {
-        siguienteCorrelativo = 1; // Reiniciar si es un año nuevo
+        siguienteCorrelativo = 1; // Reiniciar si ha cambiado el año
     } else {
         siguienteCorrelativo = ultimoNum + 1;
     }
 
-    const pad = siguienteCorrelativo.toString().padStart(3, '0');
+    // Formateamos a 4 dígitos (0001)
+    const pad = siguienteCorrelativo.toString().padStart(4, '0');
     return (tipo === 'FACTURA') ? `F-${anioActual}-${pad}` : `${anioActual}-${pad}`;
 }
 
+// Guarda el número en el historial solo cuando se confirma el documento
 function registrarNumeroUsado() {
-    const tipo = document.getElementById('tituloDoc').innerText; 
+    const tipo = document.getElementById('tituloDoc').innerText; // "PRESUPUESTO" o "FACTURA"
     const numeroStr = document.getElementById('numDoc').value;
     const anioActual = new Date().getFullYear();
 
+    // Extraemos el último bloque numérico (el correlativo)
     const partes = numeroStr.split('-');
     const ultimoId = parseInt(partes[partes.length - 1]);
 
     if (!isNaN(ultimoId)) {
-        localStorage.setItem(`last_num_${tipo}`, ultimoId);
-        localStorage.setItem(`last_anio_${tipo}`, anioActual);
+        const guardado = parseInt(localStorage.getItem(`last_num_${tipo}`)) || 0;
+        // Solo actualizamos si el número usado es igual o mayor al actual
+        if (ultimoId >= guardado) {
+            localStorage.setItem(`last_num_${tipo}`, ultimoId);
+            localStorage.setItem(`last_anio_${tipo}`, anioActual);
+        }
     }
 }
 
-// --- GESTIÓN DE FOCO E INTERFAZ ---
+// --- 2. VALIDACIONES Y FORMATO ---
+function validarTelefono(e) {
+    const el = e.target;
+    let value = el.innerText;
+    // Permite solo números, espacios y comas (Punto 1 de tus cambios)
+    const cleaned = value.replace(/[^\d\s,]/g, '');
+    
+    if (cleaned !== value) {
+        el.innerText = cleaned;
+        // Reposicionar el cursor al final
+        const range = document.createRange();
+        const sel = window.getSelection();
+        range.selectNodeContents(el);
+        range.collapse(false);
+        sel.removeAllRanges();
+        sel.addRange(range);
+    }
+}
+
+function ajustarTextArea(el) {
+    el.style.height = 'auto';
+    el.style.height = el.scrollHeight + 'px';
+}
+
+// --- 3. GESTIÓN DE INTERFAZ (Modales y Foco) ---
 function refreshEditableFocus() {
     ipcRenderer.send('request-focus');
     setTimeout(() => {
         const activeElement = document.activeElement;
         const temp = document.createElement('input');
-        
         temp.style.position = 'fixed';
         temp.style.opacity = '0';
-        temp.style.pointerEvents = 'none';
-        
         document.body.appendChild(temp);
         temp.focus();
 
@@ -53,9 +82,6 @@ function refreshEditableFocus() {
             temp.remove();
             if (activeElement && (activeElement.isContentEditable || ['TEXTAREA', 'INPUT'].includes(activeElement.tagName))) {
                 activeElement.focus();
-            } else {
-                const firstEditable = document.querySelector('[contenteditable="true"], textarea, input:not([type="hidden"])');
-                if (firstEditable) firstEditable.focus();
             }
         }, 30);
     }, 150);
@@ -69,30 +95,15 @@ function showModal(message, type = 'input', defaultValue = '') {
         const okBtn = document.getElementById('modalOk');
         const cancelBtn = document.getElementById('modalCancel');
 
-        if (!overlay) {
-            console.error('Error: modalOverlay no encontrado');
-            resolve(null);
-            return;
-        }
-
         messageEl.innerText = message;
         inputEl.value = defaultValue;
         inputEl.style.display = (type === 'input') ? 'block' : 'none';
         cancelBtn.style.display = (type === 'alert') ? 'none' : 'inline-block';
-        
         overlay.style.display = 'flex';
         
-        if (type === 'input') {
-            inputEl.focus();
-            inputEl.select();
-        } else {
-            okBtn.focus();
-        }
+        if (type === 'input') { inputEl.focus(); inputEl.select(); } else { okBtn.focus(); }
 
-        const onOk = () => {
-            const val = (type === 'input') ? inputEl.value : true;
-            cleanup(val);
-        };
+        const onOk = () => { const val = (type === 'input') ? inputEl.value : true; cleanup(val); };
         const onCancel = () => cleanup(type === 'input' ? null : false);
         const onEnter = (e) => { if (e.key === 'Enter') onOk(); };
 
@@ -111,7 +122,7 @@ function showModal(message, type = 'input', defaultValue = '') {
     });
 }
 
-// --- PERFILES ---
+// --- 4. PERFILES DE EMPRESA ---
 function actualizarSelector() {
     const select = document.getElementById('selectPerfil');
     if (!select) return;
@@ -124,25 +135,6 @@ function actualizarSelector() {
     });
 }
 
-function limpiarTelefono() {
-    const span = document.getElementById('emisorTelefono');
-    let value = span.innerText;
-    const cleaned = value.replace(/[^\d+]/g, '');
-    let hasPlus = cleaned.startsWith('+');
-    let digits = cleaned.replace(/\+/g, '');
-    let result = (hasPlus ? '+' : '') + digits;
-    
-    if (result !== value) {
-        span.innerText = result;
-        const range = document.createRange();
-        const sel = window.getSelection();
-        range.selectNodeContents(span);
-        range.collapse(false);
-        sel.removeAllRanges();
-        sel.addRange(range);
-    }
-}
-
 window.crearNuevoPerfil = async function() {
     const nombre = await showModal("Nombre Empresa/Autónomo:", 'input');
     if (!nombre) return;
@@ -150,11 +142,7 @@ window.crearNuevoPerfil = async function() {
     if (!dni) return;
     const direccion = await showModal("Dirección:", 'input');
     if (!direccion) return;
-    let telefono = await showModal("Teléfono (solo números y +):", 'input');
-    if (!telefono) return;
-
-    telefono = telefono.replace(/[^\d+]/g, '');
-    if (telefono && !telefono.startsWith('+')) telefono = '+' + telefono;
+    const telefono = await showModal("Teléfono:", 'input');
 
     perfiles.push({ nombre, dni, direccion, telefono });
     localStorage.setItem('factu_perfiles', JSON.stringify(perfiles));
@@ -167,21 +155,17 @@ window.crearNuevoPerfil = async function() {
 
 window.borrarPerfil = async function() {
     const select = document.getElementById('selectPerfil');
-    const selectedIndex = select.value;
-    if (selectedIndex === "") {
-        await showModal("Selecciona un perfil para borrar.", 'alert');
-        return;
-    }
-    const confirmar = await showModal(`¿Eliminar el perfil "${perfiles[selectedIndex].nombre}"?`, 'confirm');
+    const index = select.value;
+    if (index === "") return;
+    const confirmar = await showModal(`¿Eliminar el perfil "${perfiles[index].nombre}"?`, 'confirm');
     if (confirmar) {
-        perfiles.splice(selectedIndex, 1);
+        perfiles.splice(index, 1);
         localStorage.setItem('factu_perfiles', JSON.stringify(perfiles));
         actualizarSelector();
-        select.value = "";
     }
 };
 
-// --- TABLA Y CÁLCULOS ---
+// --- 5. TABLA DE CONCEPTOS ---
 window.añadirFila = function(desc = "", precio = 0) {
     const tbody = document.getElementById('cuerpoTabla');
     const tr = document.createElement('tr');
@@ -189,12 +173,10 @@ window.añadirFila = function(desc = "", precio = 0) {
     const tdDesc = document.createElement('td');
     const textarea = document.createElement('textarea');
     textarea.value = desc;
-    textarea.style.overflow = 'hidden';
+    textarea.placeholder = "Descripción del servicio...";
     textarea.style.resize = 'none';
-    textarea.addEventListener('input', function() {
-        this.style.height = 'auto';
-        this.style.height = this.scrollHeight + 'px';
-    });
+    textarea.style.overflow = 'hidden';
+    textarea.addEventListener('input', function() { ajustarTextArea(this); });
     tdDesc.appendChild(textarea);
 
     const tdPrecio = document.createElement('td');
@@ -208,27 +190,16 @@ window.añadirFila = function(desc = "", precio = 0) {
 
     const tdEliminar = document.createElement('td');
     tdEliminar.className = 'no-print';
-    const btnEliminar = document.createElement('button');
-    btnEliminar.textContent = '✕';
-    btnEliminar.onclick = function() {
-        tr.remove();
-        calcularTotales();
-        refreshEditableFocus();
-    };
-    tdEliminar.appendChild(btnEliminar);
+    const btn = document.createElement('button');
+    btn.textContent = '✕';
+    btn.onclick = () => { tr.remove(); calcularTotales(); refreshEditableFocus(); };
+    tdEliminar.appendChild(btn);
 
-    tr.appendChild(tdDesc);
-    tr.appendChild(tdPrecio);
-    tr.appendChild(tdEliminar);
+    tr.appendChild(tdDesc); tr.appendChild(tdPrecio); tr.appendChild(tdEliminar);
     tbody.appendChild(tr);
 
-    setTimeout(() => {
-        textarea.style.height = 'auto';
-        textarea.style.height = textarea.scrollHeight + 'px';
-    }, 0);
-
+    setTimeout(() => ajustarTextArea(textarea), 0);
     calcularTotales();
-    refreshEditableFocus();
 };
 
 window.calcularTotales = function() {
@@ -242,68 +213,53 @@ window.calcularTotales = function() {
     document.getElementById('totalFinal').innerText = (sub + ivaCuota).toFixed(2);
 };
 
-// --- PROYECTO ---
+// --- 6. CICLO DE VIDA DEL PROYECTO ---
 window.nuevoProyecto = async function(arranqueSilencioso = false) {
-    // Si NO es un arranque silencioso, preguntamos. Si lo es, pasamos directo.
-    let confirmar = arranqueSilencioso ? true : await showModal('¿Crear un nuevo proyecto? Se perderán los cambios no guardados.', 'confirm');
+    let confirmar = arranqueSilencioso ? true : await showModal('¿Nuevo proyecto? Se vaciarán los datos actuales.', 'confirm');
     
     if (confirmar) {
         document.getElementById('tituloDoc').innerText = "PRESUPUESTO";
-        document.getElementById('emisorNombre').innerText = "NOMBRE EMPRESA";
-        document.getElementById('emisorDNI').innerText = "00000000X";
-        document.getElementById('emisorDireccion').innerText = "Calle Falsa 123, Ciudad";
-        document.getElementById('emisorTelefono').innerText = "+34 600 000 000";
-        document.getElementById('datosCliente').innerHTML = "Nombre y datos del cliente...";
-        document.getElementById('obsText').value = "";
-        document.getElementById('ivaSelect').value = "21";
         
+        // Limpiamos campos de cliente (Punto 2 de tus cambios)
+        document.getElementById('clienteNombre').innerText = "";
+        document.getElementById('clienteDNI').innerText = "";
+        document.getElementById('clienteDireccion').innerText = "";
+        document.getElementById('clienteTelefono').innerText = "";
+        
+        document.getElementById('obsText').value = "";
+        ajustarTextArea(document.getElementById('obsText'));
+
         const tbody = document.getElementById('cuerpoTabla');
         tbody.innerHTML = "";
         añadirFila();
         
-        const hoy = new Date().toISOString().split('T')[0];
-        document.getElementById('fechaDoc').value = hoy;
-        
-        // El autoincremento funciona aquí
+        document.getElementById('fechaDoc').value = new Date().toISOString().split('T')[0];
         document.getElementById('numDoc').value = obtenerSiguienteNumero('PRESUPUESTO');
         
         currentFilePath = null;
         calcularTotales();
-        limpiarTelefono();
-        
-        // Solo robamos el foco si el usuario hizo clic en el botón, 
-        // no queremos que salte al arrancar la app
-        if (!arranqueSilencioso) {
-            refreshEditableFocus();
-        }
+        if (!arranqueSilencioso) refreshEditableFocus();
     }
 };
 
 window.convertirAFactura = async function() {
-    const confirmar = await showModal('¿Convertir a factura? Se creará un documento nuevo.', 'confirm');
-    if (!confirmar) return;
-
-    document.getElementById('tituloDoc').innerText = "FACTURA";
-    
-    // --- AQUÍ ESTÁ EL AUTOINCREMENTO ---
-    document.getElementById('numDoc').value = obtenerSiguienteNumero('FACTURA');
-    
-    currentFilePath = null;
-    calcularTotales();
-    refreshEditableFocus();
+    const confirmar = await showModal('¿Convertir en Factura?', 'confirm');
+    if (confirmar) {
+        document.getElementById('tituloDoc').innerText = "FACTURA";
+        document.getElementById('numDoc').value = obtenerSiguienteNumero('FACTURA');
+        refreshEditableFocus();
+    }
 };
 
-// --- GUARDAR Y CARGAR ---
+// --- 7. GUARDAR Y EXPORTAR ---
 window.guardarEditable = function() {
     const items = [];
     document.querySelectorAll('#cuerpoTabla tr').forEach(tr => {
-        const textarea = tr.querySelector('textarea');
-        const input = tr.querySelector('input');
-        if (textarea && input) {
-            items.push({ d: textarea.value, p: input.value });
-        }
+        const t = tr.querySelector('textarea');
+        const i = tr.querySelector('input');
+        if (t && i) items.push({ d: t.value, p: i.value });
     });
-    
+
     const data = {
         tipo: document.getElementById('tituloDoc').innerText,
         nombre: document.getElementById('emisorNombre').innerText,
@@ -312,77 +268,64 @@ window.guardarEditable = function() {
         telefono: document.getElementById('emisorTelefono').innerText,
         num: document.getElementById('numDoc').value,
         fecha: document.getElementById('fechaDoc').value,
-        cliente: document.getElementById('datosCliente').innerHTML,
+        cNombre: document.getElementById('clienteNombre').innerText,
+        cDni: document.getElementById('clienteDNI').innerText,
+        cDir: document.getElementById('clienteDireccion').innerText,
+        cTel: document.getElementById('clienteTelefono').innerText,
         iva: document.getElementById('ivaSelect').value,
         obs: document.getElementById('obsText').value,
         items: items
     };
-    
-    let defaultPath = currentFilePath || 'proyecto.json';
-    ipcRenderer.send('guardar-json', { data, defaultPath });
-    
-    // Guardamos el número en el historial
-    registrarNumeroUsado();
-    setTimeout(refreshEditableFocus, 500);
+
+    registrarNumeroUsado(); // Consolidar número (Punto 3)
+    ipcRenderer.send('guardar-json', { data, defaultPath: currentFilePath || 'proyecto.json' });
 };
 
-window.dispararCarga = function() {
-    document.getElementById('fileInput').click();
+window.exportarPDF = function() {
+    registrarNumeroUsado(); // Consolidar número (Punto 3)
+    let suggestedName = currentFilePath ? currentFilePath.replace(/\.json$/i, '.pdf') : 'documento.pdf';
+    ipcRenderer.send('exportar-pdf', suggestedName);
 };
+
+window.dispararCarga = () => document.getElementById('fileInput').click();
 
 document.getElementById('fileInput').onchange = function(e) {
     const file = e.target.files[0];
-    if (!file) {
-        refreshEditableFocus();
-        return;
-    }
-    
+    if (!file) return;
     const reader = new FileReader();
     reader.onload = async function(ev) {
         try {
             const d = JSON.parse(ev.target.result);
-            document.getElementById('tituloDoc').innerText = d.tipo || "PRESUPUESTO";
-            document.getElementById('emisorNombre').innerText = d.nombre || "NOMBRE EMPRESA";
-            document.getElementById('emisorDNI').innerText = d.dni || "00000000X";
-            document.getElementById('emisorDireccion').innerText = d.direccion || "";
-            document.getElementById('emisorTelefono').innerText = d.telefono || "";
+            document.getElementById('tituloDoc').innerText = d.tipo;
+            document.getElementById('emisorNombre').innerText = d.nombre;
+            document.getElementById('emisorDNI').innerText = d.dni;
+            document.getElementById('emisorDireccion').innerText = d.direccion;
+            document.getElementById('emisorTelefono').innerText = d.telefono;
+            document.getElementById('numDoc').value = d.num;
+            document.getElementById('fechaDoc').value = d.fecha;
             
-            document.getElementById('numDoc').value = d.num || "";
-            document.getElementById('fechaDoc').value = d.fecha || "";
-            document.getElementById('datosCliente').innerHTML = d.cliente || "...";
-            document.getElementById('ivaSelect').value = d.iva || "21";
-            document.getElementById('obsText').value = d.obs || "";
+            document.getElementById('clienteNombre').innerText = d.cNombre || "";
+            document.getElementById('clienteDNI').innerText = d.cDni || "";
+            document.getElementById('clienteDireccion').innerText = d.cDir || "";
+            document.getElementById('clienteTelefono').innerText = d.cTel || "";
+            
+            document.getElementById('ivaSelect').value = d.iva;
+            document.getElementById('obsText').value = d.obs;
             
             const tbody = document.getElementById('cuerpoTabla');
             tbody.innerHTML = "";
-            if (d.items && d.items.length > 0) {
-                d.items.forEach(item => añadirFila(item.d, parseFloat(item.p) || 0));
-            } else {
-                añadirFila();
-            }
+            d.items.forEach(item => añadirFila(item.d, item.p));
             
-            calcularTotales();
             currentFilePath = file.path;
-            limpiarTelefono();
-            await showModal('Proyecto cargado correctamente', 'alert');
-        } catch (error) {
-            console.error('Error:', error);
-            await showModal('Error al cargar el archivo.', 'alert');
-        }
+            calcularTotales();
+            ajustarTextArea(document.getElementById('obsText'));
+            await showModal('Proyecto cargado', 'alert');
+        } catch (err) { await showModal('Error al cargar archivo', 'alert'); }
     };
     reader.readAsText(file);
 };
 
-window.exportarPDF = function() {
-    let suggestedName = currentFilePath ? currentFilePath.replace(/\.json$/i, '.pdf') : 'documento.pdf';
-    ipcRenderer.send('exportar-pdf', suggestedName);
-    
-    // Guardamos el número en el historial
-    registrarNumeroUsado();
-    setTimeout(refreshEditableFocus, 1000);
-};
-
-// --- EVENTOS E INICIALIZACIÓN ---
+// --- 8. INICIALIZACIÓN DE LISTENERS ---
 document.getElementById('selectPerfil').onchange = function(e) {
     const p = perfiles[e.target.value];
     if (p) {
@@ -390,21 +333,23 @@ document.getElementById('selectPerfil').onchange = function(e) {
         document.getElementById('emisorDNI').innerText = p.dni;
         document.getElementById('emisorDireccion').innerText = p.direccion;
         document.getElementById('emisorTelefono').innerText = p.telefono;
-        limpiarTelefono();
-        refreshEditableFocus();
     }
 };
 
-document.getElementById('emisorTelefono').addEventListener('input', limpiarTelefono);
+// Listener para el auto-ajuste de observaciones (Punto 4)
+document.getElementById('obsText').addEventListener('input', function() { ajustarTextArea(this); });
 
-// Autoajuste inicial de textareas
-document.querySelectorAll('textarea').forEach(textarea => {
-    textarea.addEventListener('input', function() {
-        this.style.height = 'auto';
-        this.style.height = this.scrollHeight + 'px';
+// Listener para validación de teléfonos (Punto 1)
+document.getElementById('emisorTelefono').addEventListener('input', validarTelefono);
+document.getElementById('clienteTelefono').addEventListener('input', validarTelefono);
+
+// Gestión de placeholders para contenteditable
+document.querySelectorAll('[contenteditable="true"]').forEach(el => {
+    el.addEventListener('blur', () => {
+        if (el.innerText.trim() === "") el.innerHTML = "";
     });
 });
 
-// Arrancar
+// Arrancar app
 actualizarSelector();
-nuevoProyecto(true); // true para arranque silencioso sin preguntar
+nuevoProyecto(true);
