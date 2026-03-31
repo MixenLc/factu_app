@@ -4,9 +4,9 @@ Gestión sencilla de presupuestos y facturas.
 ## 📥 Descargas
 Haz clic en el enlace según tu sistema operativo para descargar la última versión estable:
 
-* **Windows:** [Descargar instalador (.exe)](https://github.com/MixenLc/factu_app/releases/download/v1.0.2/FactuApp-1.0.1.Setup.exe)
-* **macOS:** [Descargar para Mac (.zip)](https://github.com/MixenLc/factu_app/releases/download/v1.0.2/FactuApp-darwin-arm64-1.0.1.zip)
-* **macOS:** [Descargar para Mac (.dmg)](https://github.com/MixenLc/factu_app/releases/download/v1.0.2/Instalador-FactuApp.dmg)
+* **Windows:** [Descargar instalador (.exe)](https://github.com/MixenLc/factu_app/releases/download/v1.1.3/Instalador-FactuApp.exe)
+* **macOS:** [Descargar para Mac (.zip)](https://github.com/MixenLc/factu_app/releases/download/v1.1.3/FactuApp-darwin-arm64-1.1.0.zip)
+* **macOS:** [Descargar para Mac (.dmg)](https://github.com/MixenLc/factu_app/releases/download/v1.1.3/Instalador-FactuApp.dmg)
 
 ## Pasos Instalación
 
@@ -15,6 +15,8 @@ Si no te crea el acceso directo podras encontrar el .exe siguiendo estos pasos:
 
 * Pulsa la tecla `Win + R` y pon `%LocalAppData%`.
 * Busca la carpeta `factu-app` y alli esta el `factu-app.exe`.
+
+> **Nota:** Ya crea un acceso directo y ya es detectado como aplicacion sin paso adicionales.
 
 ### Mac
 Descarga el .zip o el .dmg:
